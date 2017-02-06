@@ -19,8 +19,8 @@ var orm = {
 		}
 	]
 };
-var DAO = require('daoism/dao').DAO;
-var dao = new DAO(orm);
+
+var dao = require('daoism/dao').get(orm);
 
 var id = dao.insert({
               shortText: "aaa"
