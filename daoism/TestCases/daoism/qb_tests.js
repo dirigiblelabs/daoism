@@ -2,48 +2,66 @@
 /* eslint-env node, dirigible */
 "use strict";
 
-var statements = require('daoism/statements');
+var statements = require('daoism/statements').get();
 
+//CREATE TABLE'
+console.info('---> ' + 'CREATE TABLE');
+var qb = statements.builder().createTable('TBL_A')
+		.fieldDef({
+			name: 'ID',
+			type: 'INTEGER',
+			pk: true
+		})
+		.fieldDef({
+			name: 'TEXT',
+			type: 'VARCHAR',
+			size: 100
+		}); 
+console.info(qb.toString());
 //INSERT
 console.info('---> ' + 'INSERT');
-var qb = statements.getQueryBuilder();
-var q = qb.insert().from('TBL_A')
+qb = statements.builder().insert().into('TBL_A')
 		.set({
 			name: 'id',
-			dbName:'ID'
+			dbName:'ID',
+			type: 'Int'
 		})
 		.set({
 			name: 'text',
-			dbName:'TEXT'
-		});
-console.info(q.toString());
+			dbName:'TEXT',
+			type: 'String'
+		}, 'abc');
+console.info(qb.toString());
+console.info('parametric fields: ' + qb.toParams().parameters);
 
 //UPDATE
 console.info('---> ' + 'UPDATE');
-qb = statements.getQueryBuilder();
-q = qb.update().from('TBL_A')
-	.set({
-		name: 'name',
-		dbName:'NAME'
-	})
-	.set({
-		name: 'text',
-		dbName:'TEXT'
-	}, "text+1").where('ID=?', [{name: 'id', dbName: 'ID'}]);
-console.info(q.toString());
-console.info(q.toParams().parameters.length);
+qb = statements.builder()
+		.update().table('TBL_A')
+		.set({
+			name: 'name',
+			dbName:'NAME',
+			type: 'Int'
+		})
+		.set({
+			name: 'text',
+			dbName:'TEXT',
+			type: 'String'
+		}, "TEXT+1").where('ID=?', [{name: 'id', dbName: 'ID', type: 'Int'}]);
+console.info(qb.toString());
+console.info('parametric fields '+ qb.toParams().parameters);
 
 //DELETE
 console.info('---> ' + 'DELETE');
-qb = statements.getQueryBuilder();
-q = qb['delete']().from('TBL_A').where('ID=?', [{name: 'id', dbName: 'ID'}]);
-console.info(q.toString());
-console.info(q.toParams().parameters.length);
+qb = statements.builder()
+	.delete().from('TBL_A').where('ID=?', [{name: 'id', dbName: 'ID', type: 'Int'}]);
+console.info(qb.toString());
+console.info('parametric fields: '+ qb.toParams().parameters);
 
 //SELECT
 console.info('---> ' + 'SELECT');
-qb = statements.getQueryBuilder();
-q = qb.select().from('TBL_A')
+qb = statements.builder()
+	.select().from('TBL_A')
 	.field('ID', 'id')
 	.field('NAME')
 	.where('TEXT LIKE %%?', [{name:'text', dbName:'TEXT'}])
@@ -53,21 +71,61 @@ q = qb.select().from('TBL_A')
 	.left_join('ID', 'd', 'd.id=b.id')
 	.left_join('OTHER_ID', 'c', 'c.id=b.id')	
 	.limit(10).offset(0);
-console.info(q.toString());
-console.info(q.toParams().parameters.length === 1);
+console.info(qb.toString());
+console.info('parametric fields: '+ qb.toParams().parameters);
 
-qb = statements.getQueryBuilder();
-q = qb.select().from('TBL_A')
+//COUNT
+console.info('---> ' + 'COUNT');
+qb = statements.builder()
+	.select().from('TBL_A')
 	.field('COUNT(*)');
-console.info(q.toString());
+console.info(qb.toString());
+
+//DROP
+console.info('---> ' + 'DROP');
+qb = statements.builder()
+	.dropTable().table('TBL_A');
+console.info(qb.toString());
+
+//End-to-end scenario: create -> select-> drop
+console.info('End-to-end scenario: drop -> create -> select-> drop');
 
 var ds = require("db/database").getDatasource();
-var Statements = require('daoism/statements').Statements;
-statements = new Statements();
-qb = statements.builder().select().from('TBL_A').where('NAME>?', [{name:'name', dbName: 'NAME'}]).limit(10).offset(0);
-var params = {};
-params['name'] = 50;
+statements = require('daoism/statements').get();
+
+qb = statements.builder().dropTable().table('TBL_A');
 var conn = ds.getConnection();
+try{
+	statements.execute(qb, conn);
+} catch(err){
+	console.error(err);
+}finally{
+	conn.close();
+}
+
+qb = statements.builder()
+	.createTable().table('TBL_A')
+	.fieldDef({
+		name: 'ID',
+		type: 'INTEGER',
+		pk: true
+	})
+	.fieldDef({
+		name: 'TEXT',
+		type: 'VARCHAR',
+		size: 100
+	}); 
+conn = ds.getConnection();
+try{
+	statements.execute(qb, conn);
+} finally{
+	conn.close();
+}
+
+qb = statements.builder().select().from('TBL_A').where('TEXT=?', [{name:'text', dbName: 'TEXT', type: 'String'}]).limit(10).offset(0);
+var params = {};
+params['text'] = "abc";
+conn = ds.getConnection();
 var rs;
 try{
 	rs = statements.execute(qb, conn, params);
@@ -77,5 +135,13 @@ try{
 } finally{
 	if(rs)
 		rs.close();
+	conn.close();
+}
+
+qb = statements.builder().dropTable().table('TBL_A');
+conn = ds.getConnection();
+try{
+	statements.execute(qb, conn);
+} finally{
 	conn.close();
 }

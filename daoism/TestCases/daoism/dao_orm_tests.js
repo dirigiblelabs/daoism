@@ -29,9 +29,6 @@ var orm = {
 };
 var DAO = require('daoism/dao').DAO;
 var dao = new DAO(orm, 'Test DAO Ctx');
-dao.afterInsert = function(entity){
-	
-};
 
 var entity = {
 	shortText: "aaa",
@@ -39,6 +36,7 @@ var entity = {
 	user: 'testUser'
 };
 
+dao.createTable();
 entity.id = dao.insert(entity);
 console.info(dao.find(entity.id));
 console.info(dao.list({
@@ -48,3 +46,4 @@ console.info(dao.list({
 dao.count();
 dao.update(entity);
 dao.remove(entity.id);
+dao.dropTable();

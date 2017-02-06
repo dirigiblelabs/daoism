@@ -497,6 +497,40 @@ DAO.prototype.list = function(settings) {
     }
 };
 
+DAO.prototype.createTable = function() {
+	this.$log.info('Creating table '+this.orm.dbName);
+	var parametericStatement = this.orm.statements.createTable.apply(this.orm);
+    var connection = this.datasource.getConnection();
+    try {
+    	this.statements.execute(parametericStatement, connection);
+        this.$log.info(this.orm.dbName+' table created');
+        return this;
+    } catch(e) {
+    	this.$log.error(e.message, e);
+		throw e;
+    } finally {
+        connection.close();
+    }
+    return this;
+};
+
+DAO.prototype.dropTable = function() {
+	this.$log.info('Dropping table '+this.orm.dbName);
+	var parametericStatement = this.orm.statements.dropTable.apply(this.orm);
+    var connection = this.datasource.getConnection();
+    try {
+    	this.statements.execute(parametericStatement, connection);
+        this.$log.info(this.orm.dbName+' table dropped');
+        return this;
+    } catch(e) {
+    	this.$log.error(e.message, e);
+		throw e;
+    } finally {
+        connection.close();
+    }
+    return this;
+};
+
 exports.get = function(orm, logCtxName){
 	return new DAO(orm, logCtxName);
 };

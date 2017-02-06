@@ -10,6 +10,23 @@ var ORM = exports.ORM = function(orm){
 	this.statementsLib = require("daoism/statements").get();
 	var self = this;
 	this.statements = {
+		createTable: function(){
+			var qb = self.statementsLib.builder();
+			qb.createTable(self.dbName);
+			for(var i=0; i<self.properties.length;i++){
+				var fieldDef = {
+					name: self.properties[i].dbName,
+					type: qb.dialect.typeFor(self.properties[i].type),
+					pk: self.properties[i].id,
+					required: self.properties[i].required
+				}
+				qb.fieldDef(fieldDef);
+			}
+			return qb;
+		},
+		dropTable: function(){
+			return self.statementsLib.builder().dropTable(self.dbName);
+		},		
 		insert: function(){
 			var qb = self.statementsLib.builder().insert().into(self.dbName);
 		 	for(var i=0; i<self.properties.length; i++){
