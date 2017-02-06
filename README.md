@@ -1,5 +1,6 @@
 # daoism
 DAOISM is a framework that maps persistent records to appliciaton (JSON) entities and provides customizable common data operations on top of this mapping.
+
 In short: 
 <pre>
 var orm = {
