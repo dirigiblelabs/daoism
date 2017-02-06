@@ -35,9 +35,19 @@ var ORM = exports.ORM = function(orm){
 			return self.statementsLib.builder().remove().from(self.dbName)
 					.where(self.getPrimaryKey().dbName + "=?", [self.getPrimaryKey()]);
 		},
-		find: function(){
-			return self.statementsLib.builder().select().from(self.dbName)
-					.where(self.getPrimaryKey().dbName + "=?", [self.getPrimaryKey()]);
+		find: function(params){
+			var qb = self.statementsLib.builder().select();
+			if(params.select){
+				for(var i=0; i<params.select.length; i++){
+					var property = this.getProperty(params.select[i]);
+					if(!property)
+						throw Error('Unknown field name ['+ params.select[i] + ']')
+					qb = qb.field(property.dbName);
+				}
+			}
+			qb = qb.from(self.dbName)
+				.where(self.getPrimaryKey().dbName + "=?", [self.getPrimaryKey()]);
+			return qb;
 		},
 		count: function(){
 			return self.statementsLib.builder().select().from(self.dbName).field('COUNT(*)');
@@ -49,15 +59,13 @@ var ORM = exports.ORM = function(orm){
 			var sort = settings.sort;	
 			var order = settings.order;
 			var qb = self.statementsLib.builder().select().from(self.dbName);
-	        //add where clause for any relations 
-	        var keyDefinitions = self.associationKeys().filter(function(joinKey){
+	        //add where clause for any relations to self
+/*	        var keyDefinitions = self.associationKeys().filter(function(joinKey){
 	        	for(var settingName in settings){
 	        		if(settingName === joinKey)
-	        			return joinKey;
+	        			return true;
 	        	}
-	        	return;
-	        }).filter(function(keyDef){
-	        	return keyDef!==undefined;
+	        	return false;
 	        }).map(function(key){
 	        	var matchedDefinition = self.orm.properties.filter(function(property){
 	        		return key === property.name;
@@ -67,8 +75,23 @@ var ORM = exports.ORM = function(orm){
 	        	return keyDef!==undefined;
 	        });
 	        if(keyDefinitions.length>0){
-	    	    for(var i=0; i<keyDefinitions; i++){
+	    	    for(var i=0; i<keyDefinitions.length; i++){
 		        	var def = keyDefinitions[i];
+		       		qb.where(def.dbName + '=?', [def]);
+		        }
+	        }*/
+	        
+	        //add where clause for any fields
+	        var propertyDefinitions = self.orm.properties.filter(function(property){
+	        	for(var settingName in settings){
+	        		if(settingName === property.name)
+	        			return true;
+	        	}
+	        	return false;
+	        });
+	        if(propertyDefinitions.length>0){
+	    	    for(var i=0; i<propertyDefinitions.length; i++){
+		        	var def = propertyDefinitions[i];
 		       		qb.where(def.dbName + '=?', [def]);
 		        }
 	        }
