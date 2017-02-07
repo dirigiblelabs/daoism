@@ -3,13 +3,19 @@
 "use strict";
 var database = require("db/database");
 
-var DAO = exports.DAO = function(orm, logCtxName){
+var DAO = exports.DAO = function(orm, logCtxName, ds){
 	if(orm === undefined)
 		throw Error('Illegal argument: orm['+ orm + ']');
-	this.orm = require("daoism/orm").get(orm);
 	this.$log = require('log/loggers').get(logCtxName || 'DAO');
-	this.datasource = database.getDatasource();
-	this.statements = require("daoism/statements").get();
+	this.datasource = ds || database.getDatasource();
+	this.orm = require("daoism/orm").get(orm);	
+	this.ormstatements = require('daoism/ormstatements').forDatasource(this.orm, this.datasource);
+};
+
+DAO.prototype.withDataSource = function(ds){
+	this.datasource = ds || database.getDatasource();
+	this.ormstatements = require('daoism/ormstatements').forDatasource(this.orm, this.datasource);
+	return this;
 };
 
 DAO.prototype.notify = function(event){
@@ -107,11 +113,11 @@ DAO.prototype.insert = function(entity){
 
     var connection = this.datasource.getConnection();
     try {
-        var parametericStatement = this.orm.statements.insert.apply(this.orm);
+        var parametericStatement = this.ormstatements.insert.apply(this.ormstatements);
 
         var id = this.datasource.getSequence(this.orm.dbName+'_'+this.orm.getPrimaryKey.name.toUpperCase()).next();
         dbEntity[this.orm.getPrimaryKey().name] = id;
-		var updatedRecordCount = this.statements.execute(parametericStatement, connection, dbEntity);
+		var updatedRecordCount = this.ormstatements.execute(parametericStatement, connection, dbEntity);
 		this.notify('afterInsert', dbEntity);
 		this.notify('beforeInsertAssociationSets', dbEntity);
 		if(this.orm.associationSets && Object.keys(this.orm.associationSets).length){
@@ -174,14 +180,14 @@ DAO.prototype.update = function(entity) {
 							});
 	this.validateEntity(entity, ignoredProperties);
     
-    var parametericStatement = this.orm.statements.update.apply(this.orm, [entity]);
+    var parametericStatement = this.ormstatements.update.apply(this.ormstatements, [entity]);
 
 	var dbEntity = this.createSQLEntity(entity);
 
     var connection = this.datasource.getConnection();
     try {
      	this.notify('beforeUpdateEntity', dbEntity);
-    	var updatedRecordsCount = this.statements.execute(parametericStatement, connection, dbEntity);
+    	var updatedRecordsCount = this.ormstatements.execute(parametericStatement, connection, dbEntity);
         this.$log.info(updatedRecordsCount ? this.orm.dbName+'[' + dbEntity[this.orm.getPrimaryKey().name] + '] entity updated' : 'No changes incurred in '+this.orm.dbName);
         
         return this;
@@ -206,7 +212,7 @@ DAO.prototype.remove = function(id) {
     var connection = this.datasource.getConnection();
     try {
     
-    	var parametericStatement = this.orm.statements["delete"].apply(this.orm);
+    	var parametericStatement = this.ormstatements["delete"].apply(this.ormstatements);
     	this.notify('beforeRemoveEntity', id);
     	
 		//first we attempt to remove depndents if any
@@ -242,7 +248,7 @@ DAO.prototype.remove = function(id) {
     	
 		var params = {};
        	params[this.orm.getPrimaryKey().name] = id;
-		var updatedRecordsCount = this.statements.execute(parametericStatement, connection, params);
+		var updatedRecordsCount = this.ormstatements.execute(parametericStatement, connection, params);
    		this.$log.info(updatedRecordsCount>0?this.orm.dbName+'[' + id + '] entity deleted':'No changes incurred in '+this.orm.dbName);
 
         return this;
@@ -370,10 +376,10 @@ DAO.prototype.find = function(id, expand, select) {
 		var findQbParams = {
 			select: select
 		}
-        var parametericStatement = this.orm.statements.find.apply(this.orm, [findQbParams]);
+        var parametericStatement = this.ormstatements.find.apply(this.ormstatements, [findQbParams]);
        	var params = {};
        	params[this.orm.getPrimaryKey().name] = id;
-       	var resultSet = this.statements.execute(parametericStatement, connection, params);
+       	var resultSet = this.ormstatements.execute(parametericStatement, connection, params);
  
         if (resultSet.next()) {
         	entity = this.createEntity(resultSet, select);
@@ -420,8 +426,8 @@ DAO.prototype.count = function() {
     var count = 0;
     var connection = this.datasource.getConnection();
     try {
-    	var parametericStatement = this.orm.statements.count.apply(this.orm);
-		var rs = this.statements.execute(parametericStatement, connection);
+    	var parametericStatement = this.ormstatements.count.apply(this.ormstatements);
+		var rs = this.ormstatements.execute(parametericStatement, connection);
         if (rs.next()) {
             count = rs.getInt(1);
         }
@@ -465,12 +471,12 @@ DAO.prototype.list = function(settings) {
 	}
 	
 	this.$log.info('Listing '+this.orm.dbName+' entity collection with list operators:' + listArgs.join(','));
-	var parametericStatement = this.orm.statements.list.apply(this.orm, [settings]);
+	var parametericStatement = this.ormstatements.list.apply(this.ormstatements, [settings]);
     var connection = this.datasource.getConnection();
     try {
         var entities = [];
         settings.expand = expand;
-		var resultSet = this.statements.execute(parametericStatement, connection, settings);
+		var resultSet = this.ormstatements.execute(parametericStatement, connection, settings);
         
         while (resultSet.next()) {
         	var entity = this.createEntity(resultSet);
@@ -499,10 +505,10 @@ DAO.prototype.list = function(settings) {
 
 DAO.prototype.createTable = function() {
 	this.$log.info('Creating table '+this.orm.dbName);
-	var parametericStatement = this.orm.statements.createTable.apply(this.orm);
+	var parametericStatement = this.ormstatements.createTable.apply(this.ormstatements);
     var connection = this.datasource.getConnection();
     try {
-    	this.statements.execute(parametericStatement, connection);
+    	this.ormstatements.execute(parametericStatement, connection);
         this.$log.info(this.orm.dbName+' table created');
         return this;
     } catch(e) {
@@ -516,10 +522,10 @@ DAO.prototype.createTable = function() {
 
 DAO.prototype.dropTable = function() {
 	this.$log.info('Dropping table '+this.orm.dbName);
-	var parametericStatement = this.orm.statements.dropTable.apply(this.orm);
+	var parametericStatement = this.ormstatements.dropTable.apply(this.ormstatements);
     var connection = this.datasource.getConnection();
     try {
-    	this.statements.execute(parametericStatement, connection);
+    	this.ormstatements.execute(parametericStatement, connection);
         this.$log.info(this.orm.dbName+' table dropped');
         return this;
     } catch(e) {

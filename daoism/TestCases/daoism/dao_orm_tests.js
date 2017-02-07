@@ -13,7 +13,8 @@ var orm = {
 		},{
 			name: "text",
 			dbName: "A_TEXT",
-			type: "String"
+			type: "String",
+			size: 100
 		},{
 			name: "locked",
 			dbName: "A_LOCKED",
@@ -28,22 +29,29 @@ var orm = {
 	]
 };
 var DAO = require('daoism/dao').DAO;
-var dao = new DAO(orm, 'Test DAO Ctx');
+var dao = new DAO(orm, 'Test DAO Ctx', require("db/database").getDatasource());
+
+dao.createTable();
 
 var entity = {
 	shortText: "aaa",
-	locked: false,
-	user: 'testUser'
+	locked: false
 };
 
-dao.createTable();
 entity.id = dao.insert(entity);
+
 console.info(dao.find(entity.id));
 console.info(dao.list({
 	limit:10,
 	offset:0
 }));
+
 dao.count();
+
+entity.shortText = 'bbb';
 dao.update(entity);
+console.info(dao.find(entity.id));
+
 dao.remove(entity.id);
+
 dao.dropTable();
