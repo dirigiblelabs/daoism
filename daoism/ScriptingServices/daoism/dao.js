@@ -537,6 +537,6 @@ DAO.prototype.dropTable = function() {
     return this;
 };
 
-exports.get = function(orm, logCtxName){
-	return new DAO(orm, logCtxName);
+exports.get = function(orm, logCtxName, ds){
+	return new DAO(orm, logCtxName, ds);
 };
