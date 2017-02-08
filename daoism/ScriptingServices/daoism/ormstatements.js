@@ -92,7 +92,7 @@ ORMStatements.prototype.list= function(settings){
     if(propertyDefinitions.length>0){
 	    for(var i=0; i<propertyDefinitions.length; i++){
         	var def = propertyDefinitions[i];
-	    	if(settings.filters && settings.filters.indexOf(def.name)>-1)
+	    	if(settings.$filter && settings.$filter.indexOf(def.name)>-1)
 	    		stmnt.where(def.dbName + ' LIKE ?', [def]);
 	   		else
 	   			stmnt.where(def.dbName + '=?', [def]);

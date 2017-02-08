@@ -501,10 +501,10 @@ DAO.prototype.list = function(settings) {
 	}
 	
    //simplistic filtering of (only) string properties with like
-   if(settings.filters){
-		settings.filters = settings.filters.split(',');
+   if(settings.$filter){
+		settings.$filter = settings.$filter.split(',');
 		var self = this;
-		settings.filters = settings.filters.filter(function(filterField){
+		settings.$filter = settings.$filter.filter(function(filterField){
 			var prop = self.ormstatements.orm.getProperty(filterField);
 			if(prop===undefined || prop.type!=='String' || settings[prop.name]===undefined)
 				return false;
