@@ -78,6 +78,7 @@ ORMStatements.prototype.list= function(settings){
 	var offset = settings.offset;
 	var sort = settings.sort;	
 	var order = settings.order;
+	
 	var stmnt = this.builder(this.dialect).select().from(this.orm.dbName);
 
     //add where clause for any fields
@@ -91,7 +92,10 @@ ORMStatements.prototype.list= function(settings){
     if(propertyDefinitions.length>0){
 	    for(var i=0; i<propertyDefinitions.length; i++){
         	var def = propertyDefinitions[i];
-       		stmnt.where(def.dbName + '=?', [def]);
+	    	if(settings.filters && settings.filters.indexOf(def.name)>-1)
+	    		stmnt.where(def.dbName + ' LIKE ?', [def]);
+	   		else
+	   			stmnt.where(def.dbName + '=?', [def]);
         }
     }
 
