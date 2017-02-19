@@ -5,8 +5,8 @@ In a nutshell, **DAOism** knows how to handle the CRUD operations on an entity, 
 
 Example: 
 <pre>
-//DAO configuration
-var orm = {
+//Get a DAO instance with ORM configuration
+var dao = require('daoism/dao').get({
 	dbName: "TBL_A",
 	properties: [
 		{
@@ -21,20 +21,26 @@ var orm = {
 			type: "String"
 		}
 	]
-};
-
-//Get a DAO instance with this configuration
-var dao = require('daoism/dao').get(orm);
+);
 
 //Invoke CRUD ops on the DAO instance
 var id = dao.insert({
               shortText: "aaa"
             });
-var entity = dao.find(id);            
-var numberOfrecords = dao.count();
+
+var entity = dao.find(id);
+console.info('Entity with id['+id+']: '+ JSON.stringify(entity, null,2));
+
+console.info(dao.count() + ' entities counted');
+
 var entities = dao.list();
+console.info('Entities list: '+ JSON.stringify(entities, null,2));
+
 dao.update({
       shortText: "bbb"
     });
+console.info('Updated entity with id['+id+']: '+ JSON.stringify(dao.find(id), null,2));
+
 dao.remove(id);
+console.info(dao.count() + ' entities counted after remove');
 </pre>
