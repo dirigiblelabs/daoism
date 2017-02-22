@@ -47,6 +47,7 @@ DAO.prototype.createSQLEntity = function(entity) {
 			persistentItem[optionals[i].name] = entity[optionals[i].name] === undefined ? null : entity[optionals[i].name];
 		} 
 	}
+		
 	var msgIdSegment = persistentItem[this.orm.getPrimaryKey().name]?"["+persistentItem[this.orm.getPrimaryKey().name]+"]":"";
 	this.$log.info("Transformation to " + this.orm.dbName + msgIdSegment + " DB JSON object finished");
 	return persistentItem;
@@ -125,18 +126,21 @@ DAO.prototype.insert = function(entity){
 			this.$log.info('Inserting association sets for '+this.orm.dbName + '['+dbEntity[this.orm.getPrimaryKey().name]+']');
 			for(var idx in Object.keys(this.orm.associationSets)){
 				var associationName = Object.keys(this.orm.associationSets)[idx];
-				if(['many-to-many', 'many-to-one'].indexOf(this.orm.associationSets[associationName].associationType)>-1){
-					if(dbEntity[associationName] && dbEntity[associationName].length>0){
+				if(['many-to-many', 'many-to-one'].indexOf(this.orm.associationSets[associationName].associationType)<0){
+					if(entity[associationName] && entity[associationName].length>0){
 						var associationDAO = this.orm.associationSets[associationName].dao.apply(this);
-						this.notify('beforeInsertAssociationSet', dbEntity[associationName], dbEntity);
-						for(var j=0; j<dbEntity[associationName].length; j++){
-			        		var associatedEntity = dbEntity[associationName][j];
+						this.notify('beforeInsertAssociationSet', entity[associationName], entity);
+						this.$log.info('Inserting '+entity[associationName].length+' inline entities into association set ' + associationName);
+						for(var j=0; j<entity[associationName].length; j++){
+			        		var associatedEntity = entity[associationName][j];
 			        		var associatedEntityJoinKey = this.orm.associationSets[associationName].joinKey;
-			        		associatedEntity[associatedEntityJoinKey] = dbEntity[this.orm.getPrimaryKey().name];
-			        		this.notify('beforeInsertAssociationSetEntity', dbEntity[associationName], dbEntity);
+			        		var key = this.orm.associationSets[associationName].key || this.orm.getPrimaryKey().name;
+			        		associatedEntity[associatedEntityJoinKey] = entity[key];
+			        		this.notify('beforeInsertAssociationSetEntity', entity[associationName], dbEntity);
 							associationDAO.insert(associatedEntity);
 			    		}
-			    		this.notify('afterInsertAssociationSet', dbEntity[associationName], dbEntity);
+			    		this.$log.info('Inserting '+entity[associationName].length+' inline entities into association set ' + associationName + ' finsihed');
+			    		this.notify('afterInsertAssociationSet', entity[associationName], dbEntity);
 					}				
 				}
 			}		
