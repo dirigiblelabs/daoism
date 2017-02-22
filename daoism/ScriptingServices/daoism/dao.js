@@ -224,7 +224,13 @@ DAO.prototype.remove = function(id) {
 					this.$log.info('Inspecting '+this.orm.dbName+'[' + id + '] entity\'s dependency \''+ associationName + '\' for entities to delete.');
 					var associationDAO = (this.orm.associationSets[associationName].dao && this.orm.associationSets[associationName].dao.apply(this)) || this;
 					var settings = {};
-					settings[this.orm.associationSets[associationName].joinKey] = id;
+					var joinId = id;
+					//check if we are joining on field, other than pk
+					if(this.orm.associationSets[associationName].key!==undefined){
+						var ctxEntity = this.find(id);
+						joinId = ctxEntity[this.orm.associationSets[associationName].key];
+					}
+					settings[this.orm.associationSets[associationName].joinKey] = joinId;
 					var associatedEntities;
 					//associatedEntities = this.expand(associationName, id);
 					associatedEntities = associationDAO.list(settings);
