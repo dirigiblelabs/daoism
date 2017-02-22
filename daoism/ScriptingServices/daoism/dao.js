@@ -34,7 +34,7 @@ DAO.prototype.createSQLEntity = function(entity) {
 	var mandatories = this.orm.getMandatoryProperties();
 	for(var i=0; i<mandatories.length; i++){
 		if(mandatories[i].dbValue){
-			persistentItem[mandatories[i].name] = mandatories[i].dbValue.apply(this, [entity, this.orm.properties, mandatories[i]]);
+			persistentItem[mandatories[i].name] = mandatories[i].dbValue.apply(this, [entity[mandatories[i].name], entity]);
 		} else {
 			persistentItem[mandatories[i].name] = entity[mandatories[i].name];
 		}
@@ -42,7 +42,7 @@ DAO.prototype.createSQLEntity = function(entity) {
 	var optionals = this.orm.getOptionalProperties();
 	for(var i=0; i<optionals.length; i++){
 		if(optionals[i].dbValue !== undefined){
-			persistentItem[optionals[i].name] = optionals[i].dbValue.apply(this, [entity, this.orm.properties, optionals[i]]);
+			persistentItem[optionals[i].name] = optionals[i].dbValue.apply(this, [entity[optionals[i].name], entity]);
 		} else {
 			persistentItem[optionals[i].name] = entity[optionals[i].name] === undefined ? null : entity[optionals[i].name];
 		} 
@@ -321,11 +321,13 @@ DAO.prototype.expand = function(expansionPath, context){
 		var joinTableDAO = (this.orm.associationSets[associationName].daoJoin && this.orm.associationSets[associationName].daoJoin());
 		if(!joinTableDAO)
 			throw Error('No join table DAO instance available for association '+associationName);
-		var associationSetNDAO = (this.orm.associationSets[associationName].daoN && this.orm.associationSets[associationName].daoN());
+		if(!joinTableDAO.listJoins)
+			throw Error('No listJoins funciton in join table DAO instance available for association '+associationName);
+		var associationSetNDAO = (this.orm.associationSets[associationName].daoN && this.orm.associationSets[associationName].daoN()) || this;
 		if(!associationSetNDAO)
 			throw Error('No N assocaiton DAO instance available for association '+associationName);
 		var settings = {};
-		var joinId = contextEntity[this.orm.getPrimaryKey().name];		
+		var joinId = contextEntity[this.orm.getPrimaryKey().name];
 		settings[this.orm.associationSets[associationName].joinKey] = joinId;
 		associationSetEntities = associationSetEntities.concat(joinTableDAO.listJoins.apply(joinTableDAO, [settings, {"m": associationSetMDAO, "join":joinTableDAO, "n":associationSetNDAO}]));
 		if(expansionPath.length<1){
