@@ -303,8 +303,9 @@ DAO.prototype.expand = function(expansionPath, context){
 		var settings = {};
 		if(this.orm.associationSets[associationName].defaults)
 			settings = this.orm.associationSets[associationName].defaults;
-		var joinId = contextEntity[this.orm.getPrimaryKey().name];
-		var joinKey = this.orm.associationSets[associationName].joinKey;			
+		var joinKey = this.orm.associationSets[associationName].joinKey;
+		var key = this.orm.associationSets[associationName].key || this.orm.getPrimaryKey().name;
+		var joinId = contextEntity[key];
 		settings[joinKey] = joinId;
 		
 		//var daoMany = this.orm.associationSets[associationName].dao? this.orm.associationSets[associationName].dao() : this;
@@ -327,7 +328,8 @@ DAO.prototype.expand = function(expansionPath, context){
 		if(!associationSetNDAO)
 			throw Error('No N assocaiton DAO instance available for association '+associationName);
 		var settings = {};
-		var joinId = contextEntity[this.orm.getPrimaryKey().name];
+		var key = this.orm.associationSets[associationName].key || this.orm.getPrimaryKey().name;
+		var joinId = contextEntity[key];
 		settings[this.orm.associationSets[associationName].joinKey] = joinId;
 		associationSetEntities = associationSetEntities.concat(joinTableDAO.listJoins.apply(joinTableDAO, [settings, {"m": associationSetMDAO, "join":joinTableDAO, "n":associationSetNDAO}]));
 		if(expansionPath.length<1){
