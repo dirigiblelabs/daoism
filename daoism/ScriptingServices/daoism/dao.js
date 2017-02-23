@@ -127,10 +127,10 @@ DAO.prototype.insert = function(_entity){
 		var uniques = this.orm.getUniqueProperties();
 		for(var _i = 0; _i< uniques.length; _i++){
 			var prop = uniques[_i];
-			var st = this.ormstatements.builder()
+			var st = this.ormstatements.builder(this.ormstatements.dialect)
 						.select(prop.dbName)
 						.from(this.orm.dbName)
-						.where(prop.dbName+'=?', [prop]);//TODO: check datasource
+						.where(prop.dbName+'=?', [prop]);
 			try{
 				connection = this.datasource.getConnection();						
 				var params = {};
