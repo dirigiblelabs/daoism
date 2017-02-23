@@ -63,7 +63,7 @@ ORM.prototype.getUniqueProperties = function(){
 		if(!this.properties || !this.properties.length)
 			throw Error('Invalid orm configuration - no properties are defined');
 		var uniques = this.properties.filter(function(property){
-			return property.unqiue;
+			return property.unique;
 		});
 		this.uniqueProperties = uniques;
 	}
