@@ -1,1 +1,8 @@
-{"guid":"daoism","repository":{"type":"git","branch":"master","url":"https://github.com/dirigiblelabs/daoism.git"}}
+{
+    "guid":"daoism",
+    "repository":{
+        "type":"git",
+        "branch":"1.0",
+        "url":"https://github.com/dirigiblelabs/daoism.git"
+    }
+}

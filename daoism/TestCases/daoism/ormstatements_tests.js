@@ -119,7 +119,7 @@ try{
 }
 try{
 	console.info('-----> Test remove');
-	var stmnts = ormstatements.remove();
+	var stmnts = ormstatements.remove([ormLib.getPrimaryKey().name]);
 	assert.assertTrue(stmnts !== undefined, "Failed ormstatements.delete()!==undefined check");
 	assert.assertEquals("DELETE FROM TBL_A WHERE A_ID=?", stmnts.toString(), "Failed should be equal to DELETE FROM TBL_A WHERE A_ID=?");
 	assert.assertTrue(stmnts.toParams().parameters.length === 1, "Failed ormstatements.delete().toParams().parameters.length === 1 check");

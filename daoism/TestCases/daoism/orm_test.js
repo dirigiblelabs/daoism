@@ -19,8 +19,8 @@ var orm = {
 			name: "locked",
 			dbName: "A_LOCKED",
 			type: "Short",
-			dbValue: function(entity, properties, property){
-				return entity.locked?1:0;
+			dbValue: function(val, entity){
+				return val?1:0;
 			},
 			value: function(dbValue){
 				return dbValue>0?true:false;
@@ -28,27 +28,68 @@ var orm = {
 		},{
 			name: "child",
 			dbName: "A_CHILD",
-			type: "Int"
+			type: "Int",
+			unique: true
 		}
 	],
-	associationSets: {
-		"children": {
-			joinKey: "child",
-			associationType: "one-to-many"
-		}
-	}
+	associations: [{
+		name: "children",
+		joinKey: "child",
+		associationType: "one-to-many"
+	}]
 };
 
 var ormTest = require('daoism/orm').get(orm);
 console.info('------> Starting orm_tests test suite');
 try{
+	console.info('-----> Test validate');
+	assert.assertTrue(ormTest.validate()===undefined, "Failed orm.validate() should not throw errors");
+} catch(err){
+	console.error(err.message, err);
+}
+try{	
+	console.info('-----> Test getPrimaryKey');
 	assert.assertTrue(ormTest.getPrimaryKey()!==undefined, "Failed orm.getPrimaryKey()!==undefined should be true");
 	assert.assertTrue(ormTest.getPrimaryKey().name === 'id', "Failed orm.getPrimaryKey().name should be 'id'");
+} catch(err){
+	console.error(err.message, err);
+}	
+try{	
+	console.info('-----> Test getProperty');
 	assert.assertTrue(ormTest.getProperty('text') !== 'undefined', "Failed orm.getProperty()!==undefined should be true");
+} catch(err){
+	console.error(err.message, err);
+}		
+try{	
+	console.info('-----> Test getMandatoryProperties');
 	assert.assertTrue(ormTest.getMandatoryProperties() !== undefined, "Failed orm.getMandatoryProperties()!==undefined should be true");
 	assert.assertTrue(ormTest.getMandatoryProperties().length === 1, "Failed orm.getMandatoryProperties().length===1 should be true");
+} catch(err){
+	console.error(err.message, err);
+}		
+try{	
+	console.info('-----> Test getOptionalProperties');
 	assert.assertTrue(ormTest.getOptionalProperties() !== undefined, "Failed orm.getOptionalProperties()!==undefined should be true");
 	assert.assertTrue(ormTest.getOptionalProperties().length === 3, "Failed orm.getOptionalProperties().length===3 should be true");
+} catch(err){
+	console.error(err.message, err);
+}		
+try{	
+	console.info('-----> Test getUniqueProperties');
+	assert.assertTrue(ormTest.getUniqueProperties() !== undefined, "Failed orm.getUniqueProperties()!==undefined should be true");
+	assert.assertTrue(ormTest.getUniqueProperties().length === 1, "Failed orm.getUniqueProperties().length===1 should be true");	
+} catch(err){
+	console.error(err.message, err);
+}	
+try{	
+	console.info('-----> Test getAssociationNames');
+	assert.assertTrue(ormTest.getAssociationNames().length === 1, "Failed orm.getAssociationNames().length===1 should be true");
+} catch(err){
+	console.error(err.message, err);
+}
+try{	
+	console.info('-----> Test getAssociation');
+	assert.assertTrue(ormTest.getAssociation('children') !== undefined, "Failed orm.getAssociation('children')!==undefined should be true");
 } catch(err){
 	console.error(err.message, err);
 }
