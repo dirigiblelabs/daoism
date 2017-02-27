@@ -164,7 +164,7 @@ DAO.prototype.insert = function(_entity){
 				for(var idx in Object.keys(this.orm.associations)){
 					var association = this.orm.associations[idx];
 					var associationName = association['name'];
-					if([this.orm.ASSOCIATION_TYPES.MANY_TO_MANY, this.orm.ASSOCIATION_TYPES.MANY_TO_ONE].indexOf(association.associationType)<0){
+					if([this.orm.ASSOCIATION_TYPES['MANY-TO-MANY'], this.orm.ASSOCIATION_TYPES['MANY-TO-ONE']].indexOf(association.type)<0){
 						if(entity[associationName] && entity[associationName].length>0){
 							var associationDaoFactoryFunc = association.targetDao || this;
 							if(associationDaoFactoryFunc.constructor !== Function)
@@ -292,15 +292,12 @@ DAO.prototype.remove = function() {
 			//first we attempt to remove depndents if any
 			if(this.orm.associations){
 				//Remove associated dependencies
-				for(var idx in Object.keys(this.orm.associationSets)){
+				for(var idx in Object.keys(this.orm.associations)){
 					var association = this.orm.associations[idx];
 					var associationName = association['name'];
-					if([this.orm.ASSOCIATION_TYPES.MANY_TO_MANY, this.orm.ASSOCIATION_TYPES.MANY_TO_ONE].indexOf(association.associationType)<0){
+					if([this.orm.ASSOCIATION_TYPES['MANY-TO-MANY'], this.orm.ASSOCIATION_TYPES['MANY-TO-ONE']].indexOf(association.type)<0){
 						this.$log.info('Inspecting '+this.orm.dbName+'[' + id + '] entity\'s dependency \''+ associationName + '\' for entities to delete.');
-						var associationDaoFactoryFunc = association.targetDaoDao || this;
-							if(associationDaoFactoryFunc.constructor !== Function)
-								throw Error('Invalid ORM: Association ' + associationName + ' dao property is expected to be function. Instead, it is: ' + (typeof associationDaoFactoryFunc))
-						var associationDAO = associationDaoFactoryFunc.apply(this);
+						var associationDAO = association.targetDao ? association.targetDao() : this;
 						var settings = {};
 						var joinId = id;
 						//check if we are joining on field, other than pk
@@ -319,7 +316,7 @@ DAO.prototype.remove = function() {
 								var associatedEntity = associatedEntities[j];
 								this.notify('beforeRemoveAssociationSetEntity', associatedEntity, associatedEntities, id);
 								
-								associationDAO.remove.apply(associationDAO, associatedEntity[associationDAO.orm.getPrimaryKey().name]);
+								associationDAO.remove.apply(associationDAO, [associatedEntity[associationDAO.orm.getPrimaryKey().name]]);
 								
 							}
 							this.$log.info(this.orm.dbName+'['+id+'] entity\'s '+associatedEntities.length+' dependent ' + associationName + ' '+ associatedEntities.length>1?'entities':'entity' +' deleted.');
@@ -350,15 +347,15 @@ DAO.prototype.remove = function() {
 DAO.prototype.expand = function(expansionPath, context){
 	this.$log.info('Expanding for association path ' + expansionPath + ' and context entity ' + (typeof arguments[1] !== 'object' ? 'id ': '') + arguments[1]);
 	if(!expansionPath || !expansionPath.length){
-		throw Error('Illegal argument: expansionPath['+expansionPath+']');
+		throw new Error('Illegal argument: expansionPath['+expansionPath+']');
 	}
 	if(!context){
-		throw Error('Illegal argument: context['+context+']');
+		throw new Error('Illegal argument: context['+context+']');
 	}
 	var associationName = expansionPath.splice?expansionPath.splice(0,1):expansionPath;
 	var association = this.orm.getAssociation(associationName);
 	if(!associationName || !association)
-		throw Error('Illegal argument: Unknown association for this DAO [' + associationName + ']');
+		throw new Error('Illegal argument: Unknown association for this DAO [' + associationName + ']');
 	var joinKey = association.joinKey;
 		
 	var contextEntity;
@@ -372,32 +369,29 @@ DAO.prototype.expand = function(expansionPath, context){
 		throw Error('No record found for context entity ['+context+']');
 	}
 
-	var associationTargetDaoFactoryFunc = association.targetDAO || this;
-	if(associationTargetDaoFactoryFunc.constructor !== Function)
-		throw Error('Invalid ORM: Association ' + associationName + ' dao property is expected to be function. Instead, it is: ' + (typeof associationTargetDaoFactoryFunc))
-	var associationTargetDAO = associationTargetDaoFactoryFunc.apply(this);
+	var associationTargetDAO = association.targetDao? association.targetDao.apply(this) : this;
 	if(!associationTargetDAO)
 		throw Error('No target association DAO instance available for association '+associationName);
 
 	var expansion;
 	var associationEntities= [];
-	
-	if(association.associationType===this.orm.ASSOCIATION_TYPES.ONE_TO_ONE || association[associationName].associationType===this.orm.ASSOCIATION_TYPES.MANY_TO_ONE){
+
+	if(association.type===this.orm.ASSOCIATION_TYPES['ONE-TO-ONE'] || association.type===this.orm.ASSOCIATION_TYPES['MANY-TO-ONE']){
 		var joinId = contextEntity[joinKey];
-		
+		this.$log.info('Expanding association type ' + association.type + ' on '+joinKey+'['+joinId+']');
 		expansion = associationTargetDAO.find.apply(associationTargetDAO, [joinId]);
 		
 		if(expansionPath.length>0){
 			this.expand(expansionPath, expansion);
 		}
-	} else if(association.associationType===this.orm.ASSOCIATION_TYPES.ONE_TO_MANY){
+	} else if(association.type===this.orm.ASSOCIATION_TYPES['ONE-TO-MANY']){
 		var settings = {};
 		if(association.defaults)
 			settings = association.defaults;
 		var key = association.key || this.orm.getPrimaryKey().name;
 		var joinId = contextEntity[key];
+		this.$log.info('Expanding association type ' + association.type + ' on '+joinKey+'['+joinId+']');
 		settings[joinKey] = joinId;
-		
 		associationEntities = associationEntities.concat(associationTargetDAO.list.apply(associationTargetDAO, [settings]));
 		
 		if(expansionPath.length>0){
@@ -407,8 +401,8 @@ DAO.prototype.expand = function(expansionPath, context){
 		} else {
 			expansion = associationEntities;
 		}
-	} else if(association.associationType===this.orm.ASSOCIATION_TYPES.MANY_TO_MANY){
-		var joinDAO = association.joinDAO();
+	} else if(association.type===this.orm.ASSOCIATION_TYPES['MANY-TO-MANY']){
+		var joinDAO = association.joinDao();
 		if(!joinDAO)
 			throw Error('No join DAO instance available for association ' + associationName);
 		if(!joinDAO.listJoins)
@@ -417,7 +411,7 @@ DAO.prototype.expand = function(expansionPath, context){
 		var key = association.key || this.orm.getPrimaryKey().name;
 		var joinId = contextEntity[key];
 		settings[association.joinKey] = joinId;
-		associationEntities = associationEntities.concat(joinDAO.listJoins.apply(joinDAO, [settings, {"sourceDAO": this, "joinDAO":joinDAO, "targetDAO":associationTargetDAO}]));
+		associationEntities = associationEntities.concat(joinDAO.listJoins.apply(joinDAO, [settings, {"sourceDao": this, "joinDao":joinDAO, "targetDao":associationTargetDAO}]));
 		if(expansionPath.length>0){
 			for(var i=0; i<associationEntities.length; i++){
 				this.expand(expansionPath, associationEntities[i]);	
@@ -481,7 +475,7 @@ DAO.prototype.find = function(id, expand, select) {
 				}
 			}
 			for(var i in expand){
-				var association = this.orm.associationSets[expand[i]];
+				var association = this.orm.associations[expand[i]];
 				if(association && select.indexOf(association.joinKey)<1){ 
 					select.push(association.joinKey);
 				}
@@ -623,7 +617,7 @@ DAO.prototype.list = function(settings) {
         while (resultSet.next()) {
         	var entity = this.createEntity(resultSet, settings.$select);
         	if(expand){
-        		var associationNames = this.orm.getAssociaitonNames();
+        		var associationNames = this.orm.getAssociationNames();
 				for(var idx in associationNames){
 					var associationName = associationNames[idx];
 					if(expand.indexOf(associationName)>-1){
