@@ -2,7 +2,7 @@
     "guid":"daoism",
     "repository":{
         "type":"git",
-        "branch":"1.0",
+        "branch":"master",
         "url":"https://github.com/dirigiblelabs/daoism.git"
     }
 }
