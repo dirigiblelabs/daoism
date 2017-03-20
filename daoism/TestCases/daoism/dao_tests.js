@@ -16,6 +16,10 @@ var orm = {
 			type: "String",
 			size: 100
 		},{
+			name: "dateCreated",
+			dbName: "CREATED_AT",
+			type: "Timestamp"
+		},{
 			name: "locked",
 			dbName: "A_LOCKED",
 			type: "Short",
@@ -40,7 +44,8 @@ dao.createTable();
 
 var entity = {
 	text: "aaa",
-	locked: false
+	locked: false,
+	dateCreated: new Date()
 };
 try{
 
