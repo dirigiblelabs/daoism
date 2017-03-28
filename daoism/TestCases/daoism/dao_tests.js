@@ -45,8 +45,12 @@ dao.createTable();
 var entity = {
 	text: "aaa",
 	locked: false,
+	testNull: undefined,
 	dateCreated: new Date()
 };
+
+console.info('-----> Starting DAO tests suite');
+
 try{
 
 	var assert = require('core/assert');
@@ -112,4 +116,5 @@ try{
 	
 }finally {
 	dao.dropTable();
+	console.info('-----> Finished DAO tests suite');
 }

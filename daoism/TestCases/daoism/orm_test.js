@@ -35,7 +35,7 @@ var orm = {
 	associations: [{
 		name: "children",
 		joinKey: "child",
-		associationType: "one-to-many"
+		type: "one-to-many"
 	}]
 };
 
