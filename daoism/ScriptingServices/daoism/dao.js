@@ -383,7 +383,14 @@ DAO.prototype.expand = function(expansionPath, context){
 	if(association.type===this.orm.ASSOCIATION_TYPES['ONE-TO-ONE'] || association.type===this.orm.ASSOCIATION_TYPES['MANY-TO-ONE']){
 		var joinId = contextEntity[joinKey];
 		this.$log.info('Expanding association type ' + association.type + ' on '+joinKey+'['+joinId+']');
-		expansion = associationTargetDAO.find.apply(associationTargetDAO, [joinId]);
+		if(!association.key || association.key === associationTargetDAO.orm.getPrimaryKey().name)
+			expansion = associationTargetDAO.find.apply(associationTargetDAO, [joinId]);
+		else {
+			var listSettings = {};
+			listSettings["$filter"] = association.key;
+			listSettings[association.key] = joinId;
+			expansion = associationTargetDAO.list.apply(associationTargetDAO, [listSettings])[0];
+		}
 		
 		if(expansionPath.length>0){
 			this.expand(expansionPath, expansion);
