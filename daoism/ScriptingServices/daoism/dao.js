@@ -69,7 +69,6 @@ DAO.prototype.createEntity = function(resultSet, entityPropertyNames) {
     		entity[prop.name] = prop.value(entity[prop.name]);
     	}
     }
-
 	var entityProperties = Object.keys(entity);
     for(var key in entityProperties){
 
@@ -126,7 +125,7 @@ DAO.prototype.insert = function(_entity){
 		this.validateEntity(entity, [this.orm.getPrimaryKey().name]);
 		
 		var connection;
-	
+
 		//check for unique constraint violations
 		var uniques = this.orm.getUniqueProperties();
 		for(var _i = 0; _i< uniques.length; _i++){

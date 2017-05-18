@@ -118,13 +118,17 @@ ORMStatements.prototype.list= function(settings){
 	    		stmnt.where(def.dbName + ' LIKE ?', [def]);
 	   		else{
 	   			var val = settings[def.name];
-		   			if(val.indexOf && val.indexOf('>')>-1){
+	   			if(val === null || val === undefined){
+	   				stmnt.where(def.dbName + ' IS NULL', [def]);
+	   			} else {
+	   				if(val.indexOf && val.indexOf('>')>-1){
 		   				stmnt.where(def.dbName + ' > ?', [def]);
 		   			} else if(val.indexOf && val.indexOf('<')>-1){
 		   				stmnt.where(def.dbName + ' < ?', [def]);
 		   			} else{
 		   				stmnt.where(def.dbName + '=?', [def]);
 	   				}
+	   			}
    			}
         }
     }

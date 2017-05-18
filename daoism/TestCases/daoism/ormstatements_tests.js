@@ -32,6 +32,10 @@ var orm = {
 			name: "child",
 			dbName: "A_CHILD",
 			type: "Int"
+		},{
+			name: "numeric",
+			dbName: "A_NUMERIC",
+			type: "Int"
 		}
 	],
 	associationSets: {
@@ -52,8 +56,8 @@ try{
 	console.info('-----> Test insert');
 	var stmnts = ormstatements.insert();
 	assert.assertTrue(stmnts !== undefined, "Failed ormstatements.insert()!==undefined check");
-	assert.assertEquals("INSERT INTO TBL_A(A_ID, A_TEXT, A_LOCKED, A_CHILD) VALUES(?, ?, ?, ?)", stmnts.toString(), "Failed should be euqal to INSERT INTO TBL_A(A_ID, A_TEXT, A_LOCKED, A_CHILD) VALUES(?, ?, ? , ?)");
-	assert.assertTrue(stmnts.toParams().parameters.length === 4, "Failed ormstatements.insert().parameters.length === 4 check");
+	assert.assertEquals("INSERT INTO TBL_A(A_ID, A_TEXT, A_LOCKED, A_CHILD, A_NUMERIC) VALUES(?, ?, ?, ?, ?)", stmnts.toString(), "Failed should be euqal to INSERT INTO TBL_A(A_ID, A_TEXT, A_LOCKED, A_CHILD, A_NUMERIC) VALUES(?, ?, ? , ?, ?)");
+	assert.assertTrue(stmnts.toParams().parameters.length === 5, "Failed ormstatements.insert().parameters.length === 5 check");
 } catch(err){
 	console.error(err.message, err);
 }
@@ -97,7 +101,7 @@ try{
 	console.error(err.message, err);
 }
 try{
-	console.info('-----> Test list with filter');
+	console.info('-----> Test list with stirngfield filter');
 	var stmnts = ormstatements.list({
 		text: 'abc'
 	});
@@ -107,7 +111,7 @@ try{
 	console.error(err.message, err);
 }
 try{
-	console.info('-----> Test list with filter');
+	console.info('-----> Test list with numeric field equals (=) filter');
 	var stmnts = ormstatements.list({
 		'child': 1
 	});
@@ -117,6 +121,37 @@ try{
 } catch(err){
 	console.error(err.message, err);
 }
+try{
+	console.info('-----> Test list with grater than (>) filter');
+	var stmnts = ormstatements.list({
+		'numeric': '>0'
+	});
+	assert.assertEquals("SELECT * FROM TBL_A WHERE A_NUMERIC > ?", stmnts.toString() , "Failed should be equal to SELECT * FROM TBL_A WHERE A_NUMERIC > ?");
+	assert.assertTrue(stmnts.toParams().parameters.length === 1, "Failed ormstatements.list().toParams().parameters check");
+} catch(err){
+	console.error(err.message, err);
+}
+try{
+	console.info('-----> Test list with less than (<) filter');
+	var stmnts = ormstatements.list({
+		'numeric': '<0'
+	});
+	assert.assertEquals("SELECT * FROM TBL_A WHERE A_NUMERIC < ?", stmnts.toString() , "Failed should be equal to SELECT * FROM TBL_A WHERE A_NUMERIC < ?");
+	assert.assertTrue(stmnts.toParams().parameters.length === 1, "Failed ormstatements.list().toParams().parameters check");
+} catch(err){
+	console.error(err.message, err);
+}
+try{
+	console.info('-----> Test list with is null filter');
+	var stmnts = ormstatements.list({
+		'numeric': null
+	});
+	assert.assertEquals("SELECT * FROM TBL_A WHERE A_NUMERIC IS NULL", stmnts.toString() , "Failed should be equal to SELECT * FROM TBL_A WHERE A_NUMERIC IS NULL");
+	assert.assertTrue(stmnts.toParams().parameters.length === 1, "Failed ormstatements.list().toParams().parameters check");
+} catch(err){
+	console.error(err.message + '\r\n' +err.stack);
+}
+
 try{
 	console.info('-----> Test remove');
 	var stmnts = ormstatements.remove([ormLib.getPrimaryKey().name]);

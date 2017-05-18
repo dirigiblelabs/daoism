@@ -29,6 +29,10 @@ var orm = {
 			value: function(dbValue){
 				return dbValue>0?true:false;
 			}
+		},{
+			name: "testNull",
+			dbName: "A_LG",
+			type: "Long"
 		}
 	]
 };
@@ -60,7 +64,7 @@ try{
 		entity.id = dao.insert(entity);
 		assert.assertTrue(entity.id !== undefined, "Failed entity.id!==undefined should be true");
 	} catch(err){
-		console.error(err.message, err);
+		console.error(err.message+'\r\n'+ err.stack);
 	}
 	
 	try{	
@@ -69,7 +73,7 @@ try{
 		console.info(_entity);
 		assert.assertTrue(_entity !== undefined, "Failed _entity!==undefined should be true");
 	} catch(err){
-		console.error(err.message, err);
+		console.error(err.message+'\r\n'+ err.stack);
 	}
 	
 	try{	
@@ -78,11 +82,27 @@ try{
 						limit:10,
 						offset:0
 					});
+					
 		console.info(_entities);
 		assert.assertTrue(_entities !== undefined, "Failed _entity!==undefined should be true");
 		assert.assertTrue(_entities.length=1, "Failed _entities.length===1 should be true");			
 	} catch(err){
-		console.error(err.message, err);
+		console.error(err.message+'\r\n'+ err.stack);
+	}
+	
+	try{	
+		console.info('-----> Test list({limit:10, offset:0, testNull: null})');
+		var _entities = dao.list({
+						limit:10,
+						offset:0,
+						testNull: undefined
+					});
+					
+		console.info(_entities);
+		assert.assertTrue(_entities !== undefined, "Failed _entity!==undefined should be true");
+		assert.assertTrue(_entities.length=1, "Failed _entities.length===1 should be true");			
+	} catch(err){
+		console.error(err.message+'\r\n'+ err.stack);
 	}
 	
 	try{	
@@ -90,7 +110,7 @@ try{
 		var _count = dao.count();
 		assert.assertTrue(_count !== undefined && _count===1, "Failed _count!==undefined && _count===1 should be true");
 	} catch(err){
-		console.error(err.message, err);
+		console.error(err.message+'\r\n'+ err.stack);
 	}	
 
 	try{	
@@ -102,7 +122,7 @@ try{
 		assert.assertTrue(_entity.id === entity.id , "Failed _entity.id === entity.id should be true");
 		assert.assertTrue(_entity.text === _entity.text , "Failed _entity.text === _entity.text should be true");		
 	} catch(err){
-		console.error(err.message, err);
+		console.error(err.message+'\r\n'+ err.stack);
 	}
 
 	try{	
@@ -111,7 +131,7 @@ try{
 		var _entity = dao.find(entity.id);
 		assert.assertTrue(_entity===undefined, "Failed _entity===undefined should be true");
 	} catch(err){
-		console.error(err.message, err);
+		console.error(err.message+'\r\n'+ err.stack);
 	}	
 	
 }finally {

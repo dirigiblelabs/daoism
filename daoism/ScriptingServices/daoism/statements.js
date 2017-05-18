@@ -208,8 +208,11 @@ Statements.prototype.execute = function(statementBuilder, connection, entity){
  	if(parametricFields){
 	 	for(var i=0; i<parametricFields.length; i++){
 	 		var val = entity ? entity[parametricFields[i].name] : undefined;
-	 		this.$log.info('Binding to parameter['+(i+1)+']: '+ val);
-	 		statement['set'+parametricFields[i].type](i+1, val);
+	 		if((val=== null || val===undefined) && statementBuilder.operation!==undefined && statementBuilder.operation.toLowerCase()==='select'){
+	 			continue;
+ 			}
+ 			this.$log.info('Binding to parameter['+(i+1)+']: '+ val);
+ 			statement['set'+parametricFields[i].type](i+1, val);
 	 	} 	
  	}
  	if(statementBuilder.operation!==undefined){
